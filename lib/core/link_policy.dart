@@ -19,7 +19,10 @@ class LinkPolicy {
         if (uri.host.isEmpty || uri.userInfo.isNotEmpty) return const LinkDecision(QrAction.none, null);
         return LinkDecision(QrAction.web, uri);
       case 'mailto':
-        return uri.path.isEmpty ? const LinkDecision(QrAction.none, null) : LinkDecision(QrAction.email, uri);
+        // One or more plain addresses; anything else is shown as text.
+        final addresses = Uri.decodeComponent(uri.path).split(',');
+        final valid = addresses.every((a) => RegExp(r'^[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+$').hasMatch(a.trim()));
+        return valid ? LinkDecision(QrAction.email, uri) : const LinkDecision(QrAction.none, null);
       case 'tel':
         // Uri percent-encodes spaces, so validate the decoded number and dial it without separators.
         final number = Uri.decodeComponent(uri.path);
