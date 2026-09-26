@@ -25,7 +25,11 @@ class PagePreview extends StatelessWidget {
   @override Widget build(BuildContext context) => FutureBuilder<String>(
     key: ValueKey(page.editKey), future: PreviewCache.instance.preview(page),
     builder: (context, snap) {
-      if (snap.hasError) return Center(child: Icon(Icons.broken_image_outlined, size: thumbnail ? 24 : 48, semanticLabel: S.of(context).t('This page could not be displayed', 'ไม่สามารถแสดงหน้านี้')));
+      // If the edited preview can't be rendered, show the untouched original so the page is never blank.
+      if (snap.hasError) {
+        return RotatedBox(quarterTurns: page.rotation ~/ 90, child: Image.file(File(page.originalPath), fit: fit, cacheWidth: thumbnail ? 200 : 1600, excludeFromSemantics: true,
+        errorBuilder: (context, error, stack) => Center(child: Icon(Icons.broken_image_outlined, size: thumbnail ? 24 : 48, semanticLabel: S.of(context).t('This page could not be displayed', 'ไม่สามารถแสดงหน้านี้')))));
+      }
       if (!snap.hasData) return Center(child: SizedBox.square(dimension: thumbnail ? 20 : 36, child: const CircularProgressIndicator(strokeWidth: 3)));
       return Image.file(File(snap.data!), fit: fit, cacheWidth: thumbnail ? 200 : null, gaplessPlayback: true, excludeFromSemantics: true);
     });

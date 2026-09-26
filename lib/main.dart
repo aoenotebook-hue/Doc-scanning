@@ -4,7 +4,13 @@ import 'core/settings.dart';
 import 'screens/home_screen.dart';
 
 // Settings load before the first frame so the saved theme and language never flash.
-Future<void> main() async { WidgetsFlutterBinding.ensureInitialized(); final settings = AppSettings(); await settings.load(); runApp(ScanOpenApp(settings)); }
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final settings = AppSettings();
+  // Never block the first frame: if saved settings can't be read, start with defaults.
+  try { await settings.load().timeout(const Duration(seconds: 3)); } on Object { /* Defaults apply. */ }
+  runApp(ScanOpenApp(settings));
+}
 
 class ScanOpenApp extends StatelessWidget {
   const ScanOpenApp(this.settings, {super.key}); final AppSettings settings;

@@ -64,6 +64,7 @@ class DocumentDraft {
   final List<DocumentPage> pages;
   DocumentDraft copyWith({String? title, List<DocumentPage>? pages}) => DocumentDraft(
     id: id, title: title ?? this.title, updatedAt: DateTime.now(), pages: pages ?? this.pages);
+  DocumentDraft withUpdatedAt(DateTime value) => DocumentDraft(id: id, title: title, updatedAt: value, pages: pages);
   String encode() => jsonEncode({'id': id, 'title': title, 'updatedAt': updatedAt.toIso8601String(), 'pages': pages.map((e) => e.toJson()).toList()});
   factory DocumentDraft.decode(String raw) { final j = jsonDecode(raw) as Map<String, dynamic>; return DocumentDraft(
     id: j['id'], title: j['title'], updatedAt: DateTime.parse(j['updatedAt']),
