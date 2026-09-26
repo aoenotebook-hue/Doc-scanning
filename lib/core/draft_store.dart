@@ -2,6 +2,16 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'models.dart';
 
+/// Returns the lowercase extension of [path]'s file name (e.g. `.jpg`), or `.jpg`
+/// when the name has none. Directory names are never considered.
+String imageExtension(String path) {
+  final name = path.split(RegExp(r'[/\\]')).last;
+  final dot = name.lastIndexOf('.');
+  if (dot <= 0 || dot == name.length - 1) return '.jpg';
+  final ext = name.substring(dot).toLowerCase();
+  return RegExp(r'^\.[a-z0-9]{1,5}$').hasMatch(ext) ? ext : '.jpg';
+}
+
 class DraftStore {
   Future<Directory> get _root async { final base = await getApplicationDocumentsDirectory(); return Directory('${base.path}/documents')..createSync(recursive: true); }
   Future<void> save(DocumentDraft draft) async { final root = await _root; final file = File('${root.path}/${draft.id}/draft.json'); file.parent.createSync(recursive: true); await file.writeAsString(draft.encode(), flush: true); }
@@ -10,9 +20,14 @@ class DraftStore {
     await for (final entity in root.list()) { final file = File('${entity.path}/draft.json'); if (await file.exists()) { try { out.add(DocumentDraft.decode(await file.readAsString())); } on FormatException { /* Keep a corrupt draft on disk for recovery. */ } } }
     out.sort((a, b) => b.updatedAt.compareTo(a.updatedAt)); return out;
   }
-  Future<String> preserveOriginal(String draftId, String source, String pageId) async {
-    final root = await _root; final extension = source.contains('.') ? source.substring(source.lastIndexOf('.')) : '.jpg';
-    final target = File('${root.path}/$draftId/originals/$pageId$extension'); target.parent.createSync(recursive: true); await File(source).copy(target.path); return target.path;
+  /// Copies [source] into private storage. Temporary hand-off files (scanner output,
+  /// shared images) are removed afterwards when [consumeSource] is true.
+  Future<String> preserveOriginal(String draftId, String source, String pageId, {bool consumeSource = false}) async {
+    final root = await _root;
+    final target = File('${root.path}/$draftId/originals/$pageId${imageExtension(source)}'); target.parent.createSync(recursive: true); await File(source).copy(target.path);
+    if (consumeSource) { try { await File(source).delete(); } on FileSystemException { /* Temporary directory is cleaned by the OS. */ } }
+    return target.path;
   }
+  Future<void> deleteOriginal(String path) async { final file = File(path); if (await file.exists()) await file.delete(); }
   Future<void> delete(String id) async { final root = await _root; final dir = Directory('${root.path}/$id'); if (await dir.exists()) await dir.delete(recursive: true); }
 }

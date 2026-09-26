@@ -8,6 +8,7 @@ void main() {
       expect(LinkPolicy.inspect('http://example.com').hostname, 'example.com');
       expect(LinkPolicy.inspect('mailto:person@example.com').action, QrAction.email);
       expect(LinkPolicy.inspect('tel:+66 123 456').action, QrAction.telephone);
+      expect(LinkPolicy.inspect('tel:+66 123 456').uri.toString(), 'tel:+66123456');
     });
     test('never opens executable or arbitrary schemes', () {
       for (final value in ['javascript:alert(1)', 'data:text/html,test', 'file:///secret', 'intent://x', 'myapp://x', 'plain text']) {

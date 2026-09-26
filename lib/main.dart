@@ -3,7 +3,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/settings.dart';
 import 'screens/home_screen.dart';
 
-void main() { WidgetsFlutterBinding.ensureInitialized(); final settings = AppSettings(); runApp(ScanOpenApp(settings)); settings.load(); }
+// Settings load before the first frame so the saved theme and language never flash.
+Future<void> main() async { WidgetsFlutterBinding.ensureInitialized(); final settings = AppSettings(); await settings.load(); runApp(ScanOpenApp(settings)); }
 
 class ScanOpenApp extends StatelessWidget {
   const ScanOpenApp(this.settings, {super.key}); final AppSettings settings;
