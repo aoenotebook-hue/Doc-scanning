@@ -15,6 +15,20 @@ void main() {
         expect(LinkPolicy.inspect(value).canOpen, isFalse, reason: value);
       }
     });
+    test('rejects malformed email and phone payloads', () {
+      for (final value in ['mailto:', 'mailto:not-an-address', 'tel:call-me', 'tel:12', 'https://', 'http:///path']) {
+        expect(LinkPolicy.inspect(value).canOpen, isFalse, reason: value);
+      }
+      expect(LinkPolicy.inspect('mailto:a@example.com?subject=Hi').canOpen, isTrue);
+    });
+    test('scheme matching is case-insensitive but still allowlisted', () {
+      expect(LinkPolicy.inspect('HTTPS://Example.com').action, QrAction.web);
+      expect(LinkPolicy.inspect('JavaScript:alert(1)').canOpen, isFalse);
+      expect(LinkPolicy.inspect('  https://example.com  ').hostname, 'example.com');
+    });
+    test('never invents app schemes from domains', () {
+      expect(LinkPolicy.inspect('https://www.youtube.com/watch?v=x').uri!.scheme, 'https');
+    });
     test('rejects misleading URL user information', () {
       expect(LinkPolicy.inspect('https://trusted.example@evil.example').canOpen, isFalse);
     });
