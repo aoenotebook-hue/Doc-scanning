@@ -23,47 +23,55 @@ iOS needs a Mac with Xcode and an Apple developer account (free is enough for yo
 1. Tap **Scan Document**. The camera finds page edges automatically; take one or more pages.
 2. Tap **Save/Done** in the scanner. The pages open in the editor.
 
-No camera? Use **Import Images** on the home screen to build a document from existing photos.
+To use existing photos instead, tap **Or make a document from existing images** on the home screen.
+
+If the document scanner isn't available on your phone, the app offers **Take photo**: take a normal photo, then drag the four corners to the page edges.
 
 ## Edit pages
 
 | Button | What it does |
 | --- | --- |
 | Scan / Import | Add more pages to this document |
+| Crop | Drag the four corners to the page edges; the page is straightened |
 | Rotate | Turn the selected page 90° |
 | Filter | Original, Enhanced, Grayscale, or Black & white (shown in the preview) |
 | ← / → | Move the selected page earlier or later (or long-press a thumbnail and drag) |
-| Delete page | Remove the selected page |
+| Replace page | Rescan, retake or choose a different image for this page |
+| Delete page | Remove the selected page (tap Undo to bring it back) |
 | ✎ (top bar) | Rename the document |
 
-Changes save automatically. Your original photos are never altered.
+Pinch the page to zoom. Changes save automatically, even if the app closes. Your original photos are never altered, so every edit can be changed back.
 
 ## Export or share
 
 1. In the editor tap **Export**.
-2. Choose **PDF** (one file), or **JPG/PNG** (pages packed into a ZIP).
-3. For PDF, pick page size (A4, Letter, Fit image) and DPI. Lower DPI or JPEG quality
-   = smaller file; the estimated size updates live.
+2. Pick which pages to include (all by default).
+3. Choose **PDF** (one file), or **JPG/PNG** (one page = one image; several pages are packed into a ZIP).
+4. Set **page size** (PDF only), **resolution**, and **compression**. The estimated size updates as you
+   change them; the real size is shown once the file is created. PNG has no quality setting — pick a lower
+   resolution to make it smaller.
 4. **Save As** lets you pick a folder (Files / Drive / Downloads). **Share** sends it to
    any app (email, chat…).
 
 ## Read a QR code
 
 1. Tap **Read QR** and point the camera at the code, or tap **Photos**/**Files** to read
-   one from a screenshot or picture.
+   one from a screenshot or picture. If several codes are found, pick one from the list.
+   If none is found, tap **Crop and try again** and draw closely around the code.
 2. The result is shown first — nothing opens automatically. Web links show the real
    destination hostname so you can spot fakes.
 3. Tap **Open** (web, email, phone), **Copy**, or **Share**.
 
 ## Share images into the app
 
-From Gallery/Photos, select images → **Share** → **Scan & Open**. A new document is
-created with those images.
+From Gallery/Photos, select images → **Share** → **Scan & Open**, then open the app. It asks whether
+to **Make a document** or **Read QR code**.
 
 ## Manage documents and settings
 
 * Home screen lists recent documents; tap one to continue, 🗑 to delete it.
-* ⚙ **Settings**: language (English/ไทย), light/dark theme, and *Delete all local documents*.
+* ⚙ **Settings**: language (device, English, ไทย), theme, default export settings,
+  *Clear temporary files*, and *Delete all documents*.
 
 ## Troubleshooting
 
