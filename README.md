@@ -4,6 +4,13 @@ Scan & Open is a Flutter application for iPhone and Android. Document images, dr
 exports, and QR decoding stay on-device. It has no account, backend, advertising, or
 content analytics.
 
+The public companion site is deployed to
+[`aoenotebook-hue.github.io/Doc-scanning`](https://aoenotebook-hue.github.io/Doc-scanning/).
+It provides a dependency-free, local-only QR reader for supported browsers and honest links
+to signed mobile releases. The site never uploads selected images or decoded payloads. Native
+document scanning, PDF/image export, destination pickers, and incoming sharing remain mobile
+app features because browsers cannot provide equivalent platform integrations reliably.
+
 ## Architecture
 
 * `lib/screens` contains accessible Material 3 screens and orchestration only.

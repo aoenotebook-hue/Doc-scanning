@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#075e59">
+  <meta name="description" content="Scan & Open — private document scanning and QR reading on your device.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; script-src 'self'; style-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests">
+  <title>Scan &amp; Open</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header>
+    <a class="brand" href="./" aria-label="Scan & Open home"><img src="icon.svg" alt=""><span>Scan &amp; Open</span></a>
+    <nav aria-label="Page controls">
+      <button id="language" class="quiet" type="button" aria-label="เปลี่ยนภาษา">ไทย</button>
+      <button id="theme" class="icon-button" type="button" aria-label="Change color theme">◐</button>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div>
+        <p class="eyebrow" data-i18n="eyebrow">PRIVATE • ON-DEVICE</p>
+        <h1 data-i18n="headline">Paper and QR codes,<br><span>handled privately.</span></h1>
+        <p class="lede" data-i18n="lede">Scan documents in the mobile app or read a QR image here. Your content is processed on this device—never uploaded.</p>
+        <div class="hero-actions">
+          <a class="primary" href="https://github.com/aoenotebook-hue/Doc-scanning/releases/latest" data-i18n="android">Get Android release</a>
+          <a class="secondary" href="https://github.com/aoenotebook-hue/Doc-scanning" data-i18n="source">View source</a>
+        </div>
+        <p class="fine" data-i18n="availability">Installable releases appear after the repository owner publishes a signed build. iPhone installation requires an owner-signed App Store or TestFlight build.</p>
+      </div>
+      <div class="phone" aria-hidden="true">
+        <div class="phone-top"></div>
+        <div class="mini-title">Scan &amp; Open</div>
+        <div class="mini-card teal"><b>▣</b><span>Scan Document<small>Capture pages or import images</small></span></div>
+        <div class="mini-card"><b>⌗</b><span>Read QR<small>Camera, photos, and screenshots</small></span></div>
+        <div class="mini-label">RECENT DOCUMENTS</div>
+        <div class="mini-doc"><i></i><span>Travel receipts<small>3 pages</small></span></div>
+        <div class="mini-doc"><i></i><span>Warranty<small>1 page</small></span></div>
+      </div>
+    </section>
+
+    <section class="tool" aria-labelledby="qr-title">
+      <div class="section-heading">
+        <p class="eyebrow" data-i18n="webTool">WEB TOOL</p>
+        <h2 id="qr-title" data-i18n="qrTitle">Read a QR without uploading it</h2>
+        <p data-i18n="qrIntro">Choose an image or use your camera. Nothing opens automatically; inspect the result first.</p>
+      </div>
+      <div class="qr-grid">
+        <div class="input-card">
+          <div id="dropZone" class="drop-zone">
+            <div class="qr-mark" aria-hidden="true">⌗</div>
+            <strong data-i18n="dropTitle">Choose a QR image</strong>
+            <span data-i18n="dropHint">Photo, file, or screenshot</span>
+            <label class="primary file-label"><span data-i18n="choose">Choose image</span><input id="imageInput" type="file" accept="image/*"></label>
+          </div>
+          <button id="cameraButton" class="secondary full" type="button" data-i18n="camera">Use camera</button>
+          <div id="cameraPanel" class="camera-panel" hidden>
+            <video id="video" playsinline muted aria-label="QR camera preview"></video>
+            <div class="camera-frame" aria-hidden="true"></div>
+            <button id="stopCamera" class="quiet stop" type="button" data-i18n="stop">Stop camera</button>
+          </div>
+        </div>
+        <div id="result" class="result-card" aria-live="polite">
+          <div id="emptyResult" class="empty-result"><span>◎</span><p data-i18n="empty">Your decoded result will appear here.</p></div>
+          <div id="resultContent" hidden>
+            <div class="result-header"><span class="status-dot"></span><strong id="resultCount">QR detected</strong></div>
+            <label id="resultPickerLabel" for="resultPicker" data-i18n="select" hidden>Select a result</label>
+            <select id="resultPicker" hidden></select>
+            <p class="result-label" data-i18n="destination">DESTINATION</p>
+            <div id="hostname" class="hostname"></div>
+            <pre id="payload"></pre>
+            <p id="warning" class="warning"></p>
+            <div class="result-actions">
+              <button id="openResult" class="primary" type="button" data-i18n="open">Open</button>
+              <button id="copyResult" class="secondary" type="button" data-i18n="copy">Copy</button>
+              <button id="shareResult" class="secondary" type="button" data-i18n="share">Share</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p id="compatibility" class="compatibility"></p>
+    </section>
+
+    <section class="features" aria-label="Product features">
+      <article><span>▤</span><h3 data-i18n="documents">Document ready</h3><p data-i18n="documentsBody">Multipage capture, non-destructive edits, filters, PDF, JPG, and PNG in the mobile app.</p></article>
+      <article><span>◈</span><h3 data-i18n="private">Private by design</h3><p data-i18n="privateBody">No account, backend, content analytics, or cloud upload. You choose where exports go.</p></article>
+      <article><span>↗</span><h3 data-i18n="review">Review before opening</h3><p data-i18n="reviewBody">See the hostname and complete QR payload. Only web, email, and telephone actions are allowed.</p></article>
+    </section>
+  </main>
+
+  <footer><span>Scan &amp; Open</span><span data-i18n="footer">Open source • No uploads • English &amp; Thai</span></footer>
+  <canvas id="canvas" hidden></canvas>
+  <script src="link-policy.js" defer></script>
+  <script src="app.js" defer></script>
+</body>
+</html>

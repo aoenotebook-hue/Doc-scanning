@@ -1,0 +1,59 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main, work]
+    paths:
+      - site/**
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Validate static application
+        run: |
+          node --check site/app.js
+          node --check site/link-policy.js
+          node --check site/service-worker.js
+          node site/link-policy.test.js
+          python3 - <<'PY'
+          import json
+          import pathlib
+          from html.parser import HTMLParser
+
+          class StrictEnoughParser(HTMLParser):
+              pass
+
+          root = pathlib.Path('site')
+          StrictEnoughParser().feed((root / 'index.html').read_text())
+          json.loads((root / 'manifest.webmanifest').read_text())
+          required = {'index.html', 'styles.css', 'link-policy.js', 'app.js', 'service-worker.js', 'manifest.webmanifest', 'icon.svg'}
+          assert required <= {path.name for path in root.iterdir()}
+          PY
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

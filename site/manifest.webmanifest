@@ -1,0 +1,1 @@
+{"name":"Scan & Open","short_name":"Scan & Open","description":"Private on-device QR reader and mobile document scanner companion.","start_url":"./","scope":"./","display":"standalone","background_color":"#f5faf8","theme_color":"#075e59","icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
