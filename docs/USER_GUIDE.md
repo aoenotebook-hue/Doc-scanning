@@ -21,7 +21,7 @@ iOS needs a Mac with Xcode and an Apple developer account (free is enough for yo
 ## Scan a document
 
 1. Tap **Scan Document**. The camera finds page edges automatically; take one or more pages.
-2. Tap **Save/Done** in the scanner. The pages open in the editor.
+2. Tap **Done** (or **Save**) in the scanner. The pages open in the editor.
 
 To use existing photos instead, tap **Or make a document from existing images** on the home screen.
 
@@ -34,7 +34,7 @@ If the document scanner isn't available on your phone, the app offers **Take pho
 | Scan / Import | Add more pages to this document |
 | Crop | Drag the four corners to the page edges; the page is straightened |
 | Rotate | Turn the selected page 90° |
-| Filter | Original, Enhanced, Grayscale, or Black & white (shown in the preview) |
+| Color mode | Original, Enhanced, Grayscale, or Black & white (shown in the preview) |
 | ← / → | Move the selected page earlier or later (or long-press a thumbnail and drag) |
 | Replace page | Rescan, retake or choose a different image for this page |
 | Delete page | Remove the selected page (tap Undo to bring it back) |
@@ -50,8 +50,8 @@ Pinch the page to zoom. Changes save automatically, even if the app closes. Your
 4. Set **page size** (PDF only), **resolution**, and **compression**. The estimated size updates as you
    change them; the real size is shown once the file is created. PNG has no quality setting — pick a lower
    resolution to make it smaller.
-4. **Save As** lets you pick a folder (Files / Drive / Downloads). **Share** sends it to
-   any app (email, chat…).
+5. **Save As** opens your phone's folder picker; the places listed depend on the apps and accounts set up
+   on your device. **Share** sends the file to another app. "Saved" appears only after the save succeeds.
 
 ## Read a QR code
 
