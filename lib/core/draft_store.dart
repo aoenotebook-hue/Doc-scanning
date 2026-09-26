@@ -12,12 +12,25 @@ String imageExtension(String path) {
   return RegExp(r'^\.[a-z0-9]{1,5}$').hasMatch(ext) ? ext : '.jpg';
 }
 
+/// iOS gives the app a new container path after reinstalls and some updates, so a stored
+/// absolute path can go stale. Originals always live in `<root>/<draftId>/originals/`,
+/// so a missing file is looked up there by name.
+String relocateOriginal(String storedPath, String root, String draftId) {
+  if (File(storedPath).existsSync()) return storedPath;
+  final name = storedPath.split(RegExp(r'[/\\]')).last;
+  final candidate = '$root/$draftId/originals/$name';
+  return File(candidate).existsSync() ? candidate : storedPath;
+}
+
 class DraftStore {
   Future<Directory> get _root async { final base = await getApplicationDocumentsDirectory(); return Directory('${base.path}/documents')..createSync(recursive: true); }
   Future<void> save(DocumentDraft draft) async { final root = await _root; final file = File('${root.path}/${draft.id}/draft.json'); file.parent.createSync(recursive: true); await file.writeAsString(draft.encode(), flush: true); }
   Future<List<DocumentDraft>> loadAll() async {
     final root = await _root; final out = <DocumentDraft>[];
-    await for (final entity in root.list()) { final file = File('${entity.path}/draft.json'); if (await file.exists()) { try { out.add(DocumentDraft.decode(await file.readAsString())); } on FormatException { /* Keep a corrupt draft on disk for recovery. */ } } }
+    await for (final entity in root.list()) { final file = File('${entity.path}/draft.json'); if (await file.exists()) { try {
+      final draft = DocumentDraft.decode(await file.readAsString());
+      out.add(draft.copyWith(pages: [for (final p in draft.pages) p.copyWith(originalPath: relocateOriginal(p.originalPath, root.path, draft.id))]).withUpdatedAt(draft.updatedAt));
+    } on FormatException { /* Keep a corrupt draft on disk for recovery. */ } } }
     out.sort((a, b) => b.updatedAt.compareTo(a.updatedAt)); return out;
   }
   /// Copies [source] into private storage. Temporary hand-off files (scanner output,
