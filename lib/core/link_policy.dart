@@ -21,8 +21,10 @@ class LinkPolicy {
       case 'mailto':
         return uri.path.isEmpty ? const LinkDecision(QrAction.none, null) : LinkDecision(QrAction.email, uri);
       case 'tel':
-        return RegExp(r'^\+?[0-9(). -]{3,30}$').hasMatch(uri.path)
-          ? LinkDecision(QrAction.telephone, uri) : const LinkDecision(QrAction.none, null);
+        // Uri percent-encodes spaces, so validate the decoded number and dial it without separators.
+        final number = Uri.decodeComponent(uri.path);
+        return RegExp(r'^\+?[0-9(). -]{3,30}$').hasMatch(number)
+          ? LinkDecision(QrAction.telephone, Uri(scheme: 'tel', path: number.replaceAll(RegExp(r'[(). -]'), ''))) : const LinkDecision(QrAction.none, null);
       default:
         return const LinkDecision(QrAction.none, null);
     }

@@ -33,24 +33,27 @@ class ExportService {
     if (options.format == ExportFormat.pdf) {
       final pdf = pw.Document(compress: true);
       for (final page in draft.pages) {
-        final bytes = await Isolate.run(() => _render(page, options));
-        final decoded = img.decodeImage(bytes)!;
-        final format = options.pageSize == PageSize.letter ? PdfPageFormat.letter : options.pageSize == PageSize.a4 ? PdfPageFormat.a4 : PdfPageFormat(decoded.width.toDouble(), decoded.height.toDouble());
-        pdf.addPage(pw.Page(pageFormat: format, margin: pw.EdgeInsets.zero, build: (_) => pw.Center(child: pw.Image(pw.MemoryImage(bytes), fit: pw.BoxFit.contain))));
+        // Decoding, editing and encoding happen in an isolate; only the encoded page returns.
+        final rendered = await Isolate.run(() => _render(page, options));
+        final format = options.pageSize == PageSize.letter ? PdfPageFormat.letter : options.pageSize == PageSize.a4 ? PdfPageFormat.a4
+          // Auto pages match the image at the chosen DPI so physical size stays sensible.
+          : PdfPageFormat(rendered.width * 72 / options.dpi, rendered.height * 72 / options.dpi);
+        pdf.addPage(pw.Page(pageFormat: format, margin: pw.EdgeInsets.zero, build: (_) => pw.Center(child: pw.Image(pw.MemoryImage(rendered.bytes), fit: pw.BoxFit.contain))));
       }
       final output = File('${dir.path}/${_safe(filename, 'pdf')}'); await output.writeAsBytes(await pdf.save(), flush: true); return GeneratedExport(output.path, await output.length(), true);
     }
     final archive = Archive(); var index = 1;
     for (final page in draft.pages) {
-      final bytes = await Isolate.run(() => _render(page, options));
+      final bytes = (await Isolate.run(() => _render(page, options))).bytes;
       final ext = options.format.name; archive.addFile(ArchiveFile('page_${index.toString().padLeft(3, '0')}.$ext', bytes.length, bytes)); index++;
     }
     // A ZIP makes every selected image explicit and prevents platform share sheets dropping pages.
     final output = File('${dir.path}/${_safe(filename, 'zip')}'); await output.writeAsBytes(ZipEncoder().encode(archive), flush: true); return GeneratedExport(output.path, await output.length(), true);
   }
 
-  static Uint8List _render(DocumentPage page, ExportOptions options) {
-    var source = img.decodeImage(File(page.originalPath).readAsBytesSync()); if (source == null) throw FormatException('The image could not be read.');
+  static _Rendered _render(DocumentPage page, ExportOptions options) {
+    final decoded = img.decodeImage(File(page.originalPath).readAsBytesSync()); if (decoded == null) throw const FormatException('The image could not be read.');
+    var source = decoded;
     source = img.bakeOrientation(source);
     for (var degrees = 0; degrees < page.rotation % 360; degrees += 90) { source = img.copyRotate(source, angle: 90); }
     // Fixed PDF sheets derive raster dimensions from the selected physical size and DPI.
@@ -62,9 +65,22 @@ class ExportService {
     if (page.filter == PageFilter.grayscale) source = img.grayscale(source);
     if (page.filter == PageFilter.blackAndWhite) { source = img.grayscale(source); source = img.luminanceThreshold(source, threshold: 0.55); }
     if (page.filter == PageFilter.enhanced) source = img.adjustColor(source, contrast: 1.14, saturation: 1.05);
-    return options.format == ExportFormat.png ? Uint8List.fromList(img.encodePng(source, level: 6)) : Uint8List.fromList(img.encodeJpg(source, quality: options.jpegQuality));
+    final bytes = options.format == ExportFormat.png ? Uint8List.fromList(img.encodePng(source, level: 6)) : Uint8List.fromList(img.encodeJpg(source, quality: options.jpegQuality));
+    return _Rendered(bytes, source.width, source.height);
   }
 
-  String _safe(String input, String ext) { final base = input.replaceAll(RegExp(r'[^A-Za-z0-9 _.-]'), '_').replaceAll(RegExp(r'\.[^.]+$'), ''); return '${base.isEmpty ? 'Scan' : base}.$ext'; }
+  String _safe(String input, String ext) => safeFilename(input, ext);
+  /// A filename safe for every destination: no path separators or reserved characters.
+  static String safeFilename(String input, String ext) {
+    final base = input.trim().replaceAll(RegExp(r'[\\/:*?"<>|\x00-\x1F]'), '_').replaceAll(RegExp(r'\.(pdf|zip|jpe?g|png)$', caseSensitive: false), '').replaceAll(RegExp(r'^\.+'), '');
+    return '${base.isEmpty ? 'Scan' : base}.$ext';
+  }
   Future<void> _removeExpired(Directory dir) async { final cutoff = DateTime.now().subtract(const Duration(days: 1)); await for (final item in dir.list()) { if ((await item.stat()).modified.isBefore(cutoff)) { try { await item.delete(recursive: true); } on FileSystemException { /* Retry next launch. */ } } } }
+}
+
+class _Rendered {
+  const _Rendered(this.bytes, this.width, this.height);
+  final Uint8List bytes;
+  final int width;
+  final int height;
 }

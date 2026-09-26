@@ -11,7 +11,8 @@ content analytics.
   URI allowlisting, sequential export, and the narrow native bridge.
 * Full-resolution originals are copied into a private per-draft directory. Edits are
   non-destructive metadata. Export decodes one page at a time in an isolate, bakes EXIF
-  orientation, applies edits, and releases that page before processing the next.
+  orientation, and applies edits; only the encoded page returns to the UI isolate. A PDF
+  holds each encoded page until the file is written, so peak memory grows with page count.
 * Android uses ML Kit's on-device document scanner and Storage Access Framework. iOS
   uses VisionKit and `UIDocumentPickerViewController`. Flutter provides still/live QR
   recognition through ML Kit/Apple Vision via `mobile_scanner`.
@@ -21,17 +22,16 @@ content analytics.
 
 ## Setup and run
 
-Prerequisites: Flutter stable with Dart 3.5+, Android Studio with Android SDK 35, and,
+Prerequisites: Flutter 3.41+ (stable), Android Studio with Android SDK 35, and,
 for iOS, current Xcode and CocoaPods on macOS.
 
 ```sh
 flutter pub get
-flutter gen-l10n
 flutter test
 flutter run
 ```
 
-The repository includes platform integration source. If platform scaffolding must be
+The repository includes the Android and iOS projects. If platform scaffolding must be
 regenerated after a Flutter upgrade, run `flutter create --platforms=android,ios .`, keep
 the application IDs, then reapply/retain the checked-in manifest, Gradle, entitlements,
 AppDelegate, and Share Extension target files.
