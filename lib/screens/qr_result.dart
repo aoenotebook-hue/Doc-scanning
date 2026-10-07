@@ -53,6 +53,11 @@ class _QrResultScreenState extends State<QrResultScreen> {
           Text(s.t('Goes to', 'ไปยัง'), style: text.labelMedium),
           SelectableText(d.hostname!, style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(height: 12),
+          if (d.targetsLocalNetwork) Card(color: Theme.of(context).colorScheme.errorContainer, child: Padding(padding: const EdgeInsets.all(12), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Icon(Icons.warning_amber_rounded), const SizedBox(width: 10),
+            Expanded(child: Text(s.t('This address points to a device on your own network, not a public website. Only open it if you know what it is.', 'ที่อยู่นี้ชี้ไปยังอุปกรณ์ในเครือข่ายของคุณ ไม่ใช่เว็บไซต์สาธารณะ เปิดเฉพาะเมื่อคุณรู้ว่าคืออะไร'))),
+          ]))),
+          if (d.targetsLocalNetwork) const SizedBox(height: 12),
           Card(color: Theme.of(context).colorScheme.secondaryContainer, child: Padding(padding: const EdgeInsets.all(12), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const Icon(Icons.info_outline), const SizedBox(width: 10),
             Expanded(child: Text(s.t('Check that this is the site you expect before opening. A secure (https) link does not mean the site is trustworthy.', 'ตรวจสอบว่าเป็นเว็บไซต์ที่คุณต้องการก่อนเปิด ลิงก์ที่ปลอดภัย (https) ไม่ได้หมายความว่าเว็บไซต์น่าเชื่อถือ'))),

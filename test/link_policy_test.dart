@@ -29,6 +29,21 @@ void main() {
     test('never invents app schemes from domains', () {
       expect(LinkPolicy.inspect('https://www.youtube.com/watch?v=x').uri!.scheme, 'https');
     });
+    test('rejects disguised hostnames', () {
+      for (final value in ['https://аpple.com/x', 'https://\u202Egood.com', 'https://ex ample.com']) {
+        expect(LinkPolicy.inspect(value).canOpen, isFalse, reason: value);
+      }
+      expect(LinkPolicy.inspect('https://xn--pple-43d.com').canOpen, isTrue);
+      expect(LinkPolicy.inspect('http://[::1]/').canOpen, isTrue);
+    });
+    test('flags links to the local network', () {
+      for (final value in ['https://localhost/a', 'http://192.168.0.1/', 'http://10.0.0.5', 'http://[::1]/', 'https://printer.local', 'http://router/']) {
+        expect(LinkPolicy.inspect(value).targetsLocalNetwork, isTrue, reason: value);
+      }
+      for (final value in ['https://example.com', 'https://sub.example.co.th/path']) {
+        expect(LinkPolicy.inspect(value).targetsLocalNetwork, isFalse, reason: value);
+      }
+    });
     test('rejects misleading URL user information', () {
       expect(LinkPolicy.inspect('https://trusted.example@evil.example').canOpen, isFalse);
     });
