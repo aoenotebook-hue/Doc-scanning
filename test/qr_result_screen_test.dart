@@ -40,4 +40,10 @@ void main() {
     await tester.pumpWidget(app(['hello'], locale: const Locale('th')));
     expect(find.text('คัดลอก'), findsOneWidget);
   });
+
+  testWidgets('local-network links show a warning', (tester) async {
+    await tester.pumpWidget(app(['http://192.168.0.1/admin']));
+    expect(find.textContaining('device on your own network'), findsOneWidget);
+    expect(find.text('Open'), findsOneWidget);
+  });
 }

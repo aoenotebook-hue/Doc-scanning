@@ -82,7 +82,9 @@ class MainActivity : FlutterActivity() {
       Intent.ACTION_SEND_MULTIPLE -> IntentCompat.getParcelableArrayListExtra(value, Intent.EXTRA_STREAM, Uri::class.java) ?: emptyList()
       else -> emptyList()
     }
-    for (uri in uris) {
+    // Only content:// grants are accepted. file:// and other schemes could point at this
+    // app's own private files or at paths the sender should not be able to reach.
+    for (uri in uris.filter { it.scheme == "content" }) {
       try { shared.add(copy(uri, "shared_${UUID.randomUUID()}.${extensionOf(uri)}")) } catch (e: Exception) { /* Skip unreadable items; the rest still import. */ }
     }
     value.action = null
