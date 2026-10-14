@@ -64,7 +64,7 @@ The Runner project is checked in. The Share Extension target must be added once 
 
 1. `flutter pub get`, then open `ios/Runner.xcworkspace`.
 2. Runner target → **Signing & Capabilities** → choose your Team. Keep or change the bundle ID `app.scanandopen`.
-3. Add **App Groups** to Runner and create `group.app.scanandopen.shared` (Runner already points at `Runner/Runner.entitlements`, which contains it).
+3. (Paid Apple Developer account only) Add **App Groups** to Runner and create `group.app.scanandopen.shared`, then set Runner's *Code Signing Entitlements* build setting to `Runner/Runner.entitlements`. The project leaves it unset so a free Apple ID can sign the app; without the extension, sharing images into the app from other apps is unavailable.
 4. **File → New → Target → Share Extension**, name it `ShareExtension`, language Swift. Delete the generated Swift/storyboard/Info.plist and add the checked-in `ios/ShareExtension/ShareViewController.swift` and `Info.plist` instead; set the target's *Info.plist File* to `ShareExtension/Info.plist` and *Code Signing Entitlements* to `ShareExtension/ShareExtension.entitlements`.
 5. Give the extension the bundle ID `app.scanandopen.ShareExtension`, the same Team, and the same App Group. Set its deployment target to match Runner.
 6. Check that Runner → Build Phases → **Embed Foundation Extensions** contains `ShareExtension.appex`.
