@@ -79,3 +79,20 @@ to **Make a document** or **Read QR code**.
   On Android the scanner needs Google Play services.
 * **"No QR code found"** — crop the image closer to the code and try again.
 * **Nothing saved** — you cancelled the folder picker; the document is still in the app.
+
+## Automatic weekly renewal (free Apple ID, Mac)
+
+A free Apple ID stops the app after 7 days. On the Mac you installed it from:
+
+```sh
+cd ~/Doc-scanning
+./scripts/install-auto-renew.sh
+```
+
+Every Sunday and Thursday at 12:00 the Mac rebuilds the app and reinstalls it on your iPhone, which restarts the 7 days. Your documents are kept.
+
+* The Mac must be on, awake and logged in, and the iPhone unlocked and connected (cable, or the same Wi-Fi with **Show this iPhone when on Wi-Fi** ticked in Finder).
+* If the iPhone can't be reached, the Mac shows a notification and tries again at the next run.
+* Test it now: `./scripts/renew-ios.sh` (log: `~/Library/Logs/scan-and-open-renew.log`).
+* Several iPhones connected? `DEVICE="Your iPhone name" ./scripts/renew-ios.sh`.
+* Turn it off: `./scripts/install-auto-renew.sh --uninstall`.
