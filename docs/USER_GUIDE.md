@@ -92,7 +92,9 @@ cd ~/Doc-scanning
 Every Sunday and Thursday at 12:00 the Mac rebuilds the app and reinstalls it on your iPhone, which restarts the 7 days. Your documents are kept.
 
 * The Mac must be on, awake and logged in, and the iPhone unlocked and connected (cable, or the same Wi-Fi with **Show this iPhone when on Wi-Fi** ticked in Finder).
-* If the iPhone can't be reached, the Mac shows a notification and tries again at the next run.
+* If the iPhone can't be reached, the script retries for about 2 minutes (a sleeping iPhone needs a moment to wake), then shows a notification and tries again at the next run.
+* **Test wireless first:** unplug the cable, keep the iPhone unlocked on the same Wi-Fi, and run `./scripts/renew-ios.sh --check`. It only looks for the iPhone (no build) and says whether renewal will work without the cable.
+* If macOS asks whether Terminal may find devices on your local network, choose **Allow** (System Settings → Privacy & Security → Local Network).
 * Test it now: `./scripts/renew-ios.sh` (log: `~/Library/Logs/scan-and-open-renew.log`).
 * Several iPhones connected? `DEVICE="Your iPhone name" ./scripts/renew-ios.sh`.
 * Turn it off: `./scripts/install-auto-renew.sh --uninstall`.
