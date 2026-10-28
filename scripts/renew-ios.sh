@@ -82,13 +82,33 @@ if [ "${1:-}" = "--check" ]; then
   exit 0
 fi
 
-# Keep the code current when the checkout is clean; never overwrite local edits.
-if [ -z "$(git status --porcelain)" ] && git fetch -q origin 2>/dev/null; then
-  git merge -q --ff-only origin/main 2>/dev/null || echo "Not fast-forwarding (not on main); using the current checkout."
+# --- Auto-update ----------------------------------------------------------------
+# Pull the newest code from main when the checkout is clean (your personal signing
+# settings live in the untracked ios/Flutter/Local.xcconfig, so they never block this).
+# If the new code fails to build, go back to the previous version so renewal still works.
+OLD="$(git rev-parse HEAD)"
+if [ -n "$(git status --porcelain)" ]; then
+  echo "Local changes present: not updating the code (see docs/USER_GUIDE.md, 'Automatic updates')."
+elif [ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then
+  echo "Not on main: not updating the code."
+elif git fetch -q origin 2>/dev/null; then
+  git merge -q --ff-only origin/main 2>/dev/null || echo "Could not fast-forward to origin/main."
+  [ "$(git rev-parse HEAD)" != "$OLD" ] && echo "Updated code: ${OLD:0:7} -> $(git rev-parse --short HEAD)"
+else
+  echo "Could not reach GitHub; using the current code."
 fi
 
-flutter pub get                    || fail "flutter pub get"
-flutter build ios --release        || fail "build (open ios/Runner.xcworkspace once and check Signing & Capabilities)"
+build_app() { flutter pub get && flutter build ios --release; }
+if ! build_app; then
+  if [ "$(git rev-parse HEAD)" != "$OLD" ]; then
+    echo "The new version failed to build; returning to ${OLD:0:7} so the renewal still works."
+    git reset -q --hard "$OLD"
+    build_app || fail "build (open ios/Runner.xcworkspace once and check Signing & Capabilities; run scripts/setup-local-signing.sh)"
+    notify "New app version failed to build; renewed the previous version instead (see log)."
+  else
+    fail "build (open ios/Runner.xcworkspace once and check Signing & Capabilities; run scripts/setup-local-signing.sh)"
+  fi
+fi
 APP="$REPO/build/ios/iphoneos/Runner.app"
 [ -d "$APP" ] || fail "built app not found"
 
