@@ -1,1 +1,4 @@
+// Defaults, overridden by the untracked Local.xcconfig (see scripts/setup-local-signing.sh).
+APP_BUNDLE_ID = app.scanandopen
 #include "Generated.xcconfig"
+#include? "Local.xcconfig"

@@ -98,3 +98,19 @@ Every Sunday and Thursday at 12:00 the Mac rebuilds the app and reinstalls it on
 * Test it now: `./scripts/renew-ios.sh` (log: `~/Library/Logs/scan-and-open-renew.log`).
 * Several iPhones connected? `DEVICE="Your iPhone name" ./scripts/renew-ios.sh`.
 * Turn it off: `./scripts/install-auto-renew.sh --uninstall`.
+
+### Automatic updates
+
+Each scheduled run also downloads the newest version of the app from GitHub (`main`) before it rebuilds, so improvements reach your iPhone automatically. If a new version fails to build, the script goes back to the previous version and still renews it, and you get a notification.
+
+This only works while the code folder has **no local edits**. Keep your personal signing settings in a separate file that Git ignores:
+
+```sh
+cd ~/Doc-scanning
+git stash              # sets aside your old edit to the project file
+git pull origin main
+git stash drop         # you don't need that old edit any more
+./scripts/setup-local-signing.sh C579R8WY72 com.admin.scanandopen2026
+```
+
+Use your own Team ID and bundle identifier. After this, `git status` should show nothing changed and `git pull` works with no conflicts. Check the next scheduled run in `~/Library/Logs/scan-and-open-renew.log`; a line such as `Updated code: abc1234 -> def5678` means an update was installed.
