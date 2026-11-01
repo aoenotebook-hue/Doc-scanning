@@ -101,7 +101,7 @@ Every Sunday and Thursday at 12:00 the Mac rebuilds the app and reinstalls it on
 
 ### Automatic updates
 
-Each scheduled run also downloads the newest version of the app from GitHub (`main`) before it rebuilds, so improvements reach your iPhone automatically. If a new version fails to build, the script goes back to the previous version and still renews it, and you get a notification.
+Each scheduled run also downloads the newest version of the app from GitHub (`main`) before it rebuilds, so improvements reach your iPhone automatically. If a new version fails to build, the script goes back to the previous version, still renews it, remembers the bad version so it doesn't retry it every run, and you get a notification. It picks up the next newer version automatically.
 
 This only works while the code folder has **no local edits**. Keep your personal signing settings in a separate file that Git ignores:
 

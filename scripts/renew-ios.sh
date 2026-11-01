@@ -92,8 +92,13 @@ if [ -n "$(git status --porcelain)" ]; then
 elif [ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then
   echo "Not on main: not updating the code."
 elif git fetch -q origin 2>/dev/null; then
-  git merge -q --ff-only origin/main 2>/dev/null || echo "Could not fast-forward to origin/main."
-  [ "$(git rev-parse HEAD)" != "$OLD" ] && echo "Updated code: ${OLD:0:7} -> $(git rev-parse --short HEAD)"
+  BAD_FILE="$(git rev-parse --git-dir)/scan-and-open-bad-version"
+  if [ -f "$BAD_FILE" ] && [ "$(cat "$BAD_FILE")" = "$(git rev-parse origin/main)" ]; then
+    echo "Skipping $(git rev-parse --short origin/main): it failed to build last time. Waiting for a newer version."
+  else
+    git merge -q --ff-only origin/main 2>/dev/null || echo "Could not fast-forward to origin/main."
+    [ "$(git rev-parse HEAD)" != "$OLD" ] && echo "Updated code: ${OLD:0:7} -> $(git rev-parse --short HEAD)"
+  fi
 else
   echo "Could not reach GitHub; using the current code."
 fi
@@ -102,6 +107,7 @@ build_app() { flutter pub get && flutter build ios --release; }
 if ! build_app; then
   if [ "$(git rev-parse HEAD)" != "$OLD" ]; then
     echo "The new version failed to build; returning to ${OLD:0:7} so the renewal still works."
+    git rev-parse HEAD > "$(git rev-parse --git-dir)/scan-and-open-bad-version"   # don't retry this version
     git reset -q --hard "$OLD"
     build_app || fail "build (open ios/Runner.xcworkspace once and check Signing & Capabilities; run scripts/setup-local-signing.sh)"
     notify "New app version failed to build; renewed the previous version instead (see log)."
