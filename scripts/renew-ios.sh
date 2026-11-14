@@ -9,7 +9,8 @@ set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOG="$HOME/Library/Logs/scan-and-open-renew.log"
 mkdir -p "$(dirname "$LOG")"
-exec >>"$LOG" 2>&1
+# Run by hand in Terminal: show progress on screen as well as in the log.
+if [ -t 1 ]; then exec > >(tee -a "$LOG") 2>&1; else exec >>"$LOG" 2>&1; fi
 # --if-due (used by the scheduler, which runs every few hours): do nothing unless the last
 # successful renewal is at least RENEW_EVERY_DAYS old. A run that could not reach the
 # iPhone leaves no stamp, so the next scheduled run tries again a few hours later.
