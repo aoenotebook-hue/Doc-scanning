@@ -99,6 +99,8 @@ If you installed an earlier version of the schedule (Sunday and Thursday at 12:0
 * If macOS asks whether Terminal may find devices on your local network, choose **Allow** (System Settings → Privacy & Security → Local Network).
 * Test it now: `./scripts/renew-ios.sh` (log: `~/Library/Logs/scan-and-open-renew.log`).
 * Several iPhones connected? `DEVICE="Your iPhone name" ./scripts/renew-ios.sh`.
+* **"Xcode is not signed in to your Apple ID":** Xcode sometimes signs your Apple ID out (for example after a password change or a macOS update), and the renewal cannot sign the app without it. Open **Xcode → Settings → Accounts**, click **+**, add your Apple ID, then run `./scripts/renew-ios.sh`.
+* Check the schedule is installed: `launchctl list | grep scanandopen` should print one line. If it prints nothing, run `./scripts/install-auto-renew.sh`.
 * Turn it off: `./scripts/install-auto-renew.sh --uninstall`.
 
 ### Automatic updates

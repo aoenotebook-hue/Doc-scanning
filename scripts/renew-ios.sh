@@ -117,18 +117,27 @@ else
   echo "Could not reach GitHub; using the current code."
 fi
 
-build_app() { flutter pub get && flutter build ios --release; }
+BUILD_OUT="$(mktemp "${TMPDIR:-/tmp}/scan-and-open-build.XXXXXX")"
+build_app() { { flutter pub get && flutter build ios --release; } 2>&1 | tee "$BUILD_OUT"; return "${PIPESTATUS[0]}"; }
+# A signing failure is about this Mac's Apple ID, not about the code: say so plainly and
+# never treat it as a bad app version.
+signing_problem() { grep -qE "No Accounts|No profiles for|could not code sign|No signing certificate|Provisioning profile" "$BUILD_OUT"; }
+SIGN_MSG="Xcode is not signed in to your Apple ID. Open Xcode > Settings > Accounts, add your Apple ID, then run scripts/renew-ios.sh"
 if ! build_app; then
-  if [ "$(git rev-parse HEAD)" != "$OLD" ]; then
+  if signing_problem; then
+    [ "$(git rev-parse HEAD)" != "$OLD" ] && git reset -q --hard "$OLD"
+    rm -f "$BUILD_OUT"; fail "$SIGN_MSG"
+  elif [ "$(git rev-parse HEAD)" != "$OLD" ]; then
     echo "The new version failed to build; returning to ${OLD:0:7} so the renewal still works."
     git rev-parse HEAD > "$(git rev-parse --git-dir)/scan-and-open-bad-version"   # don't retry this version
     git reset -q --hard "$OLD"
-    build_app || fail "build (open ios/Runner.xcworkspace once and check Signing & Capabilities; run scripts/setup-local-signing.sh)"
+    build_app || fail "build of the previous version (see log)"
     notify "New app version failed to build; renewed the previous version instead (see log)."
   else
-    fail "build (open ios/Runner.xcworkspace once and check Signing & Capabilities; run scripts/setup-local-signing.sh)"
+    rm -f "$BUILD_OUT"; fail "build (see log)"
   fi
 fi
+rm -f "$BUILD_OUT"
 APP="$REPO/build/ios/iphoneos/Runner.app"
 [ -d "$APP" ] || fail "built app not found"
 
