@@ -9,8 +9,21 @@ set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOG="$HOME/Library/Logs/scan-and-open-renew.log"
 mkdir -p "$(dirname "$LOG")"
-exec >>"$LOG" 2>&1
-echo; echo "=== $(date '+%Y-%m-%d %H:%M:%S') renew start ==="
+# Run by hand in Terminal: show progress on screen as well as in the log.
+if [ -t 1 ]; then exec > >(tee -a "$LOG") 2>&1; else exec >>"$LOG" 2>&1; fi
+# --if-due (used by the scheduler, which runs every few hours): do nothing unless the last
+# successful renewal is at least RENEW_EVERY_DAYS old. A run that could not reach the
+# iPhone leaves no stamp, so the next scheduled run tries again a few hours later.
+STAMP="$HOME/Library/Application Support/ScanAndOpen/last-renewal"
+MODE="${1:-}"
+days_since_renewal() {
+  [ -f "$STAMP" ] || { echo 999; return; }
+  echo $(( ( $(date +%s) - $(cat "$STAMP") ) / 86400 ))
+}
+if [ "$MODE" = "--if-due" ] && [ "$(days_since_renewal)" -lt "${RENEW_EVERY_DAYS:-3}" ]; then
+  exit 0
+fi
+echo; echo "=== $(date '+%Y-%m-%d %H:%M:%S') renew start (last renewal: $(days_since_renewal) day(s) ago) ==="
 
 notify() { osascript -e "display notification \"$1\" with title \"Scan & Open\"" >/dev/null 2>&1 || true; echo "$1"; }
 fail()   { notify "Renewal failed: $1 (see $LOG)"; exit 1; }
@@ -39,7 +52,7 @@ for d in devices:
 }
 
 find_with_devicectl() {
-  local json; json="$(mktemp -t scan-and-open-devices)"
+  local json; json="$(mktemp "${TMPDIR:-/tmp}/scan-and-open-devices.XXXXXX")"
   xcrun devicectl list devices --json-output "$json" >/dev/null 2>&1 || { rm -f "$json"; return; }
   /usr/bin/python3 - "$json" <<'PY'
 import json, os, sys
@@ -70,13 +83,15 @@ done
 
 if [ -z "$DEVICE_ID" ]; then
   echo "--- diagnostics ---"; xcrun devicectl list devices 2>&1 | head -20; flutter devices 2>&1 | head -20
-  notify "iPhone not reachable. Unlock it and put it on the same Wi-Fi as this Mac (or connect the cable), then run scripts/renew-ios.sh."
+  MSG="iPhone not reachable. Unlock it and put it on the same Wi-Fi as this Mac (or connect the cable), then run scripts/renew-ios.sh."
+  # Scheduled runs retry every few hours, so only interrupt the user once time is running out.
+  if [ "$MODE" = "--if-due" ] && [ "$(days_since_renewal)" -lt 5 ]; then echo "$MSG (will retry at the next scheduled run)"; else notify "$MSG"; fi
   exit 0   # not an error: the next scheduled run tries again
 fi
 echo "Device: $DEVICE_ID"
 
 # --check only reports whether the iPhone can be reached (use it to test wireless).
-if [ "${1:-}" = "--check" ]; then
+if [ "$MODE" = "--check" ]; then
   notify "iPhone reachable: $DEVICE_ID. Renewal should work without the cable."
   xcrun devicectl list devices 2>&1 | head -10
   exit 0
@@ -103,18 +118,27 @@ else
   echo "Could not reach GitHub; using the current code."
 fi
 
-build_app() { flutter pub get && flutter build ios --release; }
+BUILD_OUT="$(mktemp "${TMPDIR:-/tmp}/scan-and-open-build.XXXXXX")"
+build_app() { { flutter pub get && flutter build ios --release; } 2>&1 | tee "$BUILD_OUT"; return "${PIPESTATUS[0]}"; }
+# A signing failure is about this Mac's Apple ID, not about the code: say so plainly and
+# never treat it as a bad app version.
+signing_problem() { grep -qE "No Accounts|No profiles for|could not code sign|No signing certificate|Provisioning profile" "$BUILD_OUT"; }
+SIGN_MSG="Xcode is not signed in to your Apple ID. Open Xcode > Settings > Accounts, add your Apple ID, then run scripts/renew-ios.sh"
 if ! build_app; then
-  if [ "$(git rev-parse HEAD)" != "$OLD" ]; then
+  if signing_problem; then
+    [ "$(git rev-parse HEAD)" != "$OLD" ] && git reset -q --hard "$OLD"
+    rm -f "$BUILD_OUT"; fail "$SIGN_MSG"
+  elif [ "$(git rev-parse HEAD)" != "$OLD" ]; then
     echo "The new version failed to build; returning to ${OLD:0:7} so the renewal still works."
     git rev-parse HEAD > "$(git rev-parse --git-dir)/scan-and-open-bad-version"   # don't retry this version
     git reset -q --hard "$OLD"
-    build_app || fail "build (open ios/Runner.xcworkspace once and check Signing & Capabilities; run scripts/setup-local-signing.sh)"
+    build_app || fail "build of the previous version (see log)"
     notify "New app version failed to build; renewed the previous version instead (see log)."
   else
-    fail "build (open ios/Runner.xcworkspace once and check Signing & Capabilities; run scripts/setup-local-signing.sh)"
+    rm -f "$BUILD_OUT"; fail "build (see log)"
   fi
 fi
+rm -f "$BUILD_OUT"
 APP="$REPO/build/ios/iphoneos/Runner.app"
 [ -d "$APP" ] || fail "built app not found"
 
@@ -125,4 +149,5 @@ for attempt in 1 2 3; do
   echo "Install attempt $attempt failed; retrying in 15 s."; sleep 15
 done
 [ "$installed" = 1 ] || fail "install on iPhone (keep it unlocked and on the same Wi-Fi)"
+mkdir -p "$(dirname "$STAMP")" && date +%s > "$STAMP"
 notify "Scan & Open renewed for another 7 days."

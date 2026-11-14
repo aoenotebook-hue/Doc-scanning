@@ -14,7 +14,9 @@ jobs:
           git clone --depth 1 -b stable https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
           echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
       - run: flutter pub get
-      - run: flutter analyze
+      # Infos (e.g. deprecation notices from a newer Flutter) are reported but do not fail CI;
+      # warnings and errors still do.
+      - run: flutter analyze --no-fatal-infos
       - run: flutter test
   android:
     runs-on: ubuntu-latest

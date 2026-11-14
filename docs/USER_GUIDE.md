@@ -89,14 +89,18 @@ cd ~/Doc-scanning
 ./scripts/install-auto-renew.sh
 ```
 
-Every Sunday and Thursday at 12:00 the Mac rebuilds the app and reinstalls it on your iPhone, which restarts the 7 days. Your documents are kept.
+The Mac then checks every 3 hours (and each time you log in). When the last successful renewal is 3 or more days old, it rebuilds the app and reinstalls it on your iPhone, which restarts the 7 days. If the iPhone can't be reached, it simply tries again 3 hours later, so the Mac and iPhone only need to be together (Mac awake, iPhone unlocked on the same Wi-Fi or on the cable) once within about 4 days. Your documents are kept.
+
+If you installed an earlier version of the schedule (Sunday and Thursday at 12:00), run `./scripts/install-auto-renew.sh` again to switch to this one.
 
 * The Mac must be on, awake and logged in, and the iPhone unlocked and connected (cable, or the same Wi-Fi with **Show this iPhone when on Wi-Fi** ticked in Finder).
-* If the iPhone can't be reached, the script retries for about 2 minutes (a sleeping iPhone needs a moment to wake), then shows a notification and tries again at the next run.
+* If the iPhone can't be reached, the script retries for about 2 minutes (a sleeping iPhone needs a moment to wake), then tries again at the next run. You only get a notification once the last renewal is 5 or more days old.
 * **Test wireless first:** unplug the cable, keep the iPhone unlocked on the same Wi-Fi, and run `./scripts/renew-ios.sh --check`. It only looks for the iPhone (no build) and says whether renewal will work without the cable.
 * If macOS asks whether Terminal may find devices on your local network, choose **Allow** (System Settings → Privacy & Security → Local Network).
 * Test it now: `./scripts/renew-ios.sh` (log: `~/Library/Logs/scan-and-open-renew.log`).
 * Several iPhones connected? `DEVICE="Your iPhone name" ./scripts/renew-ios.sh`.
+* **"Xcode is not signed in to your Apple ID":** Xcode sometimes signs your Apple ID out (for example after a password change or a macOS update), and the renewal cannot sign the app without it. Open **Xcode → Settings → Accounts**, click **+**, add your Apple ID, then run `./scripts/renew-ios.sh`.
+* Check the schedule is installed: `launchctl list | grep scanandopen` should print one line. If it prints nothing, run `./scripts/install-auto-renew.sh`.
 * Turn it off: `./scripts/install-auto-renew.sh --uninstall`.
 
 ### Automatic updates
@@ -113,4 +117,4 @@ git stash drop         # you don't need that old edit any more
 ./scripts/setup-local-signing.sh C579R8WY72 com.admin.scanandopen2026
 ```
 
-Use your own Team ID and bundle identifier. After this, `git status` should show nothing changed and `git pull` works with no conflicts. Check the next scheduled run in `~/Library/Logs/scan-and-open-renew.log`; a line such as `Updated code: abc1234 -> def5678` means an update was installed.
+Use your own Team ID and bundle identifier. After this, `git status` should show nothing changed and `git pull` works with no conflicts. Check the next renewal in `~/Library/Logs/scan-and-open-renew.log`; a line such as `Updated code: abc1234 -> def5678` means an update was installed.
