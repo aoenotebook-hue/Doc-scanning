@@ -10,7 +10,19 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOG="$HOME/Library/Logs/scan-and-open-renew.log"
 mkdir -p "$(dirname "$LOG")"
 exec >>"$LOG" 2>&1
-echo; echo "=== $(date '+%Y-%m-%d %H:%M:%S') renew start ==="
+# --if-due (used by the scheduler, which runs every few hours): do nothing unless the last
+# successful renewal is at least RENEW_EVERY_DAYS old. A run that could not reach the
+# iPhone leaves no stamp, so the next scheduled run tries again a few hours later.
+STAMP="$HOME/Library/Application Support/ScanAndOpen/last-renewal"
+MODE="${1:-}"
+days_since_renewal() {
+  [ -f "$STAMP" ] || { echo 999; return; }
+  echo $(( ( $(date +%s) - $(cat "$STAMP") ) / 86400 ))
+}
+if [ "$MODE" = "--if-due" ] && [ "$(days_since_renewal)" -lt "${RENEW_EVERY_DAYS:-3}" ]; then
+  exit 0
+fi
+echo; echo "=== $(date '+%Y-%m-%d %H:%M:%S') renew start (last renewal: $(days_since_renewal) day(s) ago) ==="
 
 notify() { osascript -e "display notification \"$1\" with title \"Scan & Open\"" >/dev/null 2>&1 || true; echo "$1"; }
 fail()   { notify "Renewal failed: $1 (see $LOG)"; exit 1; }
@@ -39,7 +51,7 @@ for d in devices:
 }
 
 find_with_devicectl() {
-  local json; json="$(mktemp -t scan-and-open-devices)"
+  local json; json="$(mktemp "${TMPDIR:-/tmp}/scan-and-open-devices.XXXXXX")"
   xcrun devicectl list devices --json-output "$json" >/dev/null 2>&1 || { rm -f "$json"; return; }
   /usr/bin/python3 - "$json" <<'PY'
 import json, os, sys
@@ -70,13 +82,15 @@ done
 
 if [ -z "$DEVICE_ID" ]; then
   echo "--- diagnostics ---"; xcrun devicectl list devices 2>&1 | head -20; flutter devices 2>&1 | head -20
-  notify "iPhone not reachable. Unlock it and put it on the same Wi-Fi as this Mac (or connect the cable), then run scripts/renew-ios.sh."
+  MSG="iPhone not reachable. Unlock it and put it on the same Wi-Fi as this Mac (or connect the cable), then run scripts/renew-ios.sh."
+  # Scheduled runs retry every few hours, so only interrupt the user once time is running out.
+  if [ "$MODE" = "--if-due" ] && [ "$(days_since_renewal)" -lt 5 ]; then echo "$MSG (will retry at the next scheduled run)"; else notify "$MSG"; fi
   exit 0   # not an error: the next scheduled run tries again
 fi
 echo "Device: $DEVICE_ID"
 
 # --check only reports whether the iPhone can be reached (use it to test wireless).
-if [ "${1:-}" = "--check" ]; then
+if [ "$MODE" = "--check" ]; then
   notify "iPhone reachable: $DEVICE_ID. Renewal should work without the cable."
   xcrun devicectl list devices 2>&1 | head -10
   exit 0
@@ -125,4 +139,5 @@ for attempt in 1 2 3; do
   echo "Install attempt $attempt failed; retrying in 15 s."; sleep 15
 done
 [ "$installed" = 1 ] || fail "install on iPhone (keep it unlocked and on the same Wi-Fi)"
+mkdir -p "$(dirname "$STAMP")" && date +%s > "$STAMP"
 notify "Scan & Open renewed for another 7 days."
